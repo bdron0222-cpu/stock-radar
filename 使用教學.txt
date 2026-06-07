@@ -1,0 +1,27 @@
+目前完整的系統資料流 (Data Flow)
+這四個檔案的協作關係：
+
+維護階段 (不定期)：
+create_small_cap_csv.py ➡ 產生/更新 ➡ small_cap_list.csv (這是一切的基礎)
+
+運算階段 (定期執行，例如每天)：
+small_cap_list.csv ➡ scanner.py 讀取並掃描 ➡ 產生 ➡ results.csv
+
+瀏覽階段 (手機隨時觀看)：
+
+app.py 讀取 small_cap_list.csv (供單檔查詢下拉選單使用)
+
+app.py 讀取 results.csv (供全場掃描頁面直接顯示)
+
+
+1.大概一季打開svcode程式，打開終端機(選terminal，再選new ter,minal)，執行python create_small_cap_csv.py，點選存檔
+**這一步是更新股票清單檔案
+
+2.打開終端機(選terminal，再選new ter,minal)，執行streamlit run app.py
+**這一步是在電腦試跑看看選股網頁有沒有問題
+
+3.登入https://github.com/，選擇bdron0222-cpu/stock-radar，點選add file，再點選upload files，把電腦桌面的MyStockRadar資料夾內的app.py，requirements，small_cap_list這三個檔案上傳，點選commit changes
+**把更新後的檔案上傳到網路
+
+4.登入https://share.streamlit.io/，點選stock-radar∙main∙app.py，把網址複製起來
+**網址就是更新後的選股網頁
