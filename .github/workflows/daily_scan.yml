@@ -1,0 +1,34 @@
+name: Daily Stock Scan
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # UTC 早上 6 點 = 台灣時間 下午 2 點
+  workflow_dispatch:    # 這裡已經修正對齊，讓 GitHub 正確讀取
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 必須開放寫入權限，讓機器人可以更新 results.csv
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Run scanner
+        run: python scanner.py
+      
+      - name: Commit results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add results.csv
+          git commit -m "Update scan results via GitHub Action" || exit 0
+          git push
