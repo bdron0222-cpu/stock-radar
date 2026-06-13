@@ -3,19 +3,19 @@ name: Daily Stock Scan
 on:
   schedule:
     - cron: '0 6 * * *' # UTC 早上 6 點 = 台灣時間 下午 2 點
-  workflow_dispatch:    # 這裡已經修正對齊，讓 GitHub 正確讀取
+  workflow_dispatch:    # 允許手動觸發
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 必須開放寫入權限，讓機器人可以更新 results.csv
+      contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      
+        uses: actions/checkout@v4  # 升級到 v4 以解決 Node.js 警告
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5  # 升級到 v5
         with:
           python-version: '3.9'
       
@@ -29,6 +29,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add results.csv
-          git commit -m "Update scan results via GitHub Action" || exit 0
-          git push
+          # -f 參數強制無視 .gitignore，這是解決衝突的關鍵
+          git add -f results.csv
+          # 檢查是否有變動，有的話才 commit
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update scan results" && git push)
