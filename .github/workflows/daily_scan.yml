@@ -2,13 +2,8 @@ name: Daily Stock Scan
 
 on:
   schedule:
-<<<<<<< HEAD
     - cron: '0 6 * * *' # UTC 06:00 = 台灣時間 14:00
   workflow_dispatch: 
-=======
-    - cron: '0 6 * * *' # UTC 早上 6 點 = 台灣時間 下午 2 點
-  workflow_dispatch:    # 允許手動觸發
->>>>>>> 23a3ec6552c6da8b6ab7ebc7d2ca8a671d226659
 
 jobs:
   build:
@@ -17,41 +12,27 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-<<<<<<< HEAD
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
-=======
-        uses: actions/checkout@v4  # 升級到 v4 以解決 Node.js 警告
-
-      - name: Set up Python
-        uses: actions/setup-python@v5  # 升級到 v5
->>>>>>> 23a3ec6552c6da8b6ab7ebc7d2ca8a671d226659
         with:
-          python-version: '3.10' # 建議使用 3.10+
+          python-version: '3.10'
       
       - name: Install dependencies
         run: pip install -r requirements.txt
       
       - name: Run Pipeline
-        # 使用 && 確保 get_tickers 成功後才執行 scanner
+        # 這裡將 get_tickers.py 改成了 fetch_stock_list.py
         run: |
-          python get_tickers.py
+          python fetch_stock_list.py
           python scanner.py
       
       - name: Commit results
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-<<<<<<< HEAD
-          # 強制加入 csv 檔
-          git add -f results.csv
+          # 強制加入 csv 檔 (包含清單檔與結果檔)
+          git add -f small_cap_list.csv results.csv
           # 若有變動則提交並推送到 GitHub
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Scan results" && git push)
-=======
-          # -f 參數強制無視 .gitignore，這是解決衝突的關鍵
-          git add -f results.csv
-          # 檢查是否有變動，有的話才 commit
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update scan results" && git push)
->>>>>>> 23a3ec6552c6da8b6ab7ebc7d2ca8a671d226659
