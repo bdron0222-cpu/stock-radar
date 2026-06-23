@@ -9,42 +9,40 @@ def fetch_stock_list():
     headers = {'user-agent': 'Mozilla/5.0'}
     res = requests.get(url, headers=headers)
     
-    # 使用 io.StringIO 解決警告
     dfs = pd.read_html(io.StringIO(res.text))
     df = dfs[0]
     
-    # 這裡將第一列強制設定為標題，並將原始資料保留下來
+    # 1. 設定標題
     df.columns = df.iloc[0]
     df = df.iloc[1:]
     
-    # 【除錯用】如果出錯，你可以看到現在的欄位名稱是什麼
-    print("目前偵測到的欄位名稱:", df.columns.tolist())
+    # 2. 精準重新命名：索引 0 是 Symbol_Name，索引 3 是 Market
+    new_columns = {}
+    new_columns[df.columns[0]] = 'Symbol_Name'
+    new_columns[df.columns[3]] = 'Market'
+    df = df.rename(columns=new_columns)
     
-    # 【關鍵修正】：不要依賴名稱，直接透過欄位順序來指定
-    # 根據證交所表格結構：
-    # 索引 1 通常是 "有價證券代號及名稱"
-    # 索引 3 通常是 "市場" (上市/上櫃)
-    # 我們重新命名它們以符合後續程式邏輯
-    df.rename(columns={df.columns[1]: 'Symbol_Name', df.columns[3]: 'Market'}, inplace=True)
-    
-    # 拆分代號與名稱
-    df[['Code', 'Name']] = df['Symbol_Name'].str.split(' ', n=1, expand=True)
+    # 3. 安全地拆分代號與名稱 (使用 n=1, expand=True)
+    # 先產生分割後的 DataFrame，再合併回去
+    split_df = df['Symbol_Name'].str.split(n=1, expand=True)
+    df['Code'] = split_df[0]
+    df['Name'] = split_df[1]
     
     # --- 清洗邏輯 ---
     
-    # 1. 篩選市場
+    # 篩選市場 (確保只有 '上市' 或 '上櫃')
     df = df[df['Market'].isin(['上市', '上櫃'])].copy()
     
-    # 2. 篩選四位數且為純數字代號
+    # 篩選四位數且為純數字代號
     df = df[df['Code'].str.len() == 4]
     df = df[df['Code'].str.isdigit()]
     
-    # 3. 剔除 ETF、特別股等
+    # 剔除 ETF、特別股等
     exclude_keywords = ['ETF', '認購', '認售', '特別股', '存託']
     for keyword in exclude_keywords:
         df = df[~df['Name'].str.contains(keyword, na=False)]
     
-    # 4. 準備輸出
+    # 準備輸出
     def format_ticker(row):
         return f"{row['Code']}.TW" if row['Market'] == '上市' else f"{row['Code']}.TWO"
         
