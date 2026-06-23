@@ -1,2 +1,9 @@
+# 核心排除項目
 results.csv
 .venv/
+
+# 輔助清理項目 (加進去會讓倉庫更乾淨)
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
