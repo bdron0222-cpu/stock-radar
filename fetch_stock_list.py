@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import io
 
 def fetch_stock_list():
     print("正在從證交所下載最新股票清單...")
@@ -9,15 +10,15 @@ def fetch_stock_list():
     headers = {'user-agent': 'Mozilla/5.0'}
     res = requests.get(url, headers=headers)
     
-    # 使用 pandas 解析網頁表格
-    dfs = pd.read_html(res.text)
+    # 使用 io.StringIO 解決 FutureWarning，並確保解析網頁內容
+    dfs = pd.read_html(io.StringIO(res.text))
     df = dfs[0]
     
     # 設定第一列為標頭
     df.columns = df.iloc[0]
     df = df.iloc[1:]
     
-    # 欄位重新命名以方便處理
+    # 欄位重新命名
     df = df.rename(columns={
         "有價證券代號及名稱": "Symbol_Name",
         "市場": "Market"
@@ -26,19 +27,16 @@ def fetch_stock_list():
     # 拆分代號與名稱
     df[['Code', 'Name']] = df['Symbol_Name'].str.split(' ', n=1, expand=True)
     
-    # --- 【清洗邏輯】 ---
+    # --- 清洗邏輯 ---
     
-    # 1. 篩選市場：只要上市 (TSE) 或上櫃 (OTC)
-    # 註：證交所頁面顯示為 '上市' 和 '上櫃'
+    # 1. 篩選市場：上市 (TSE) 或上櫃 (OTC)
     df = df[df['Market'].isin(['上市', '上櫃'])].copy()
     
-    # 2. 篩選四位數且為純數字代號 (排除權證、ETF 等複雜代號)
-    # str.isdigit() 可以排除那些代號超過4碼或帶有符號的標的
+    # 2. 篩選四位數且為純數字代號
     df = df[df['Code'].str.len() == 4]
     df = df[df['Code'].str.isdigit()]
     
-    # 3. 剔除 ETF、特別股、存託憑證等非一般股票
-    # 透過名稱過濾掉常見非股票標的
+    # 3. 剔除 ETF、特別股、存託憑證等
     exclude_keywords = ['ETF', '認購', '認售', '特別股', '存託']
     for keyword in exclude_keywords:
         df = df[~df['Name'].str.contains(keyword, na=False)]
