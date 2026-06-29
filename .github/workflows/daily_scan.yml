@@ -23,7 +23,6 @@ jobs:
         run: pip install -r requirements.txt
       
       - name: Run Pipeline
-        # 這裡將 get_tickers.py 改成了 fetch_stock_list.py
         run: |
           python fetch_stock_list.py
           python scanner.py
@@ -32,7 +31,12 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # 強制加入 csv 檔 (包含清單檔與結果檔)
-          git add -f small_cap_list.csv results.csv
-          # 若有變動則提交並推送到 GitHub
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Scan results" && git push)
+          
+          # 【心跳機制】：產生或更新一個 timestamp 檔案，確保每天都有變動
+          echo "Last run: $(date)" > heartbeat.txt
+          
+          # 強制加入 csv 檔與心跳檔
+          git add -f small_cap_list.csv results.csv heartbeat.txt
+          
+          # 若有變動則提交並推送到 GitHub (因為 heartbeat.txt 每天都會變，這保證了一定會 Commit)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Scan results and keep-alive" && git push)
