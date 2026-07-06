@@ -20,7 +20,11 @@ jobs:
           python-version: '3.10'
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          # 先安裝您專案原本的依賴
+          pip install -r requirements.txt
+          # 強制安裝 HTML 解析所需的套件，確保不會再發生 ModuleNotFoundError
+          pip install html5lib lxml beautifulsoup4
       
       - name: Run Pipeline
         run: |
@@ -38,5 +42,5 @@ jobs:
           # 強制加入 csv 檔與心跳檔
           git add -f small_cap_list.csv results.csv heartbeat.txt
           
-          # 若有變動則提交並推送到 GitHub (因為 heartbeat.txt 每天都會變，這保證了一定會 Commit)
+          # 若有變動則提交並推送到 GitHub
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Scan results and keep-alive" && git push)
